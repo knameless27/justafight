@@ -41,6 +41,18 @@ const actions = [
     id: 5,
     name: "increase speed",
   },
+  {
+    id: 6,
+    name: "decrease defense",
+  },
+  {
+    id: 7,
+    name: "decrease damage",
+  },
+  {
+    id: 8,
+    name: "decrease speed",
+  },
 ];
 
 const states = [
@@ -102,49 +114,49 @@ const attacks = [
   {
     id: 1,
     name: "Bullet rush",
-    percent: 15,
+    value: 15,
     type: getType(5),
     action: getActions(1),
   },
   {
     id: 2,
     name: "Ration",
-    percent: 15,
+    value: 15,
     type: getType(1),
     action: getActions(2),
   },
   {
     id: 3,
     name: "Kevlar",
-    percent: 30,
+    value: 30,
     type: getType(5),
     action: getActions(3),
   },
   {
     id: 4,
     name: "Bellow",
-    percent: 20,
+    value: 20,
     type: getType(1),
     action: getActions(4),
   },
   {
     id: 5,
     name: "Ball burst",
-    percent: 20,
+    value: 20,
     type: getType(1),
     action: getActions(1),
   },
   {
     id: 6,
     name: "Cold chest",
-    percent: 25,
+    value: 25,
     type: getType(4),
     action: getActions(3),
   },
   {
     id: 7,
     name: "Preparation",
-    percent: 5,
+    value: 5,
     type: getType(1),
     action: getActions(5),
   },
@@ -158,7 +170,7 @@ const monsters = [
       "https://i.postimg.cc/y8xrdXv1/Floppagunner.webp",
     life: 150, // 200
     defense: 50, // 100
-    attack: 80, // 100
+    attack: 110, // 150
     speed: 40, // 100
     attacks: getAttacks(1, 2, 3, 4),
     types: [getType(5)],
@@ -171,7 +183,7 @@ const monsters = [
       "https://i.postimg.cc/G2MwTSP2/Fjutnz-KWAAQM3c-F-removebg-preview.png",
     life: 120, // 200
     defense: 45, // 100
-    attack: 82, // 100
+    attack: 130, // 150
     speed: 80, // 100
     attacks: getAttacks(5, 6, 7, 4),
     types: [getType(4)],
@@ -179,4 +191,4 @@ const monsters = [
   },
 ];
 
-export { monsters, types, attacks };
+export { monsters, types, attacks, weakness };
