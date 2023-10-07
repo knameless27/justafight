@@ -8,6 +8,10 @@ const getAttacks = (id1, id2, id3, id4) => {
   return newAttacks;
 };
 
+const getAttack = (id) => {
+  return attacks[id - 1];
+};
+
 const getType = (id) => {
   return types[id - 1];
 };
@@ -191,4 +195,4 @@ const monsters = [
   },
 ];
 
-export { monsters, types, attacks, weakness };
+export { monsters, types, attacks, getAttack, getAttacks, getActions, getType };
