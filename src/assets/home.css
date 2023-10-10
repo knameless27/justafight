@@ -1,0 +1,15 @@
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.item {
+    padding-top: 15%;
+}
+
+.buttonsito {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

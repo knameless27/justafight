@@ -1,7 +1,10 @@
-import { Button, Card, Col, Row } from "react-bootstrap";
+import { Button, Card, Col, Row, Modal, ProgressBar } from "react-bootstrap";
 import { getAttack, monsters } from "../data";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import "../assets/playing.css";
+import cloneDeep from "lodash/cloneDeep";
 
 function getEnemy() {
   const index = Math.floor(Math.random() * monsters.length) + 1;
@@ -22,6 +25,7 @@ function changeTurn({
   updateTurn,
   updateHistory,
   history,
+  handleShow,
 }) {
   if (turn == "player") {
     makeAction({
@@ -36,6 +40,7 @@ function changeTurn({
       updatePlayer,
       updateHistory,
       history,
+      handleShow,
     });
   }
   if (turn == "enemy") {
@@ -52,6 +57,7 @@ function changeTurn({
         updatePlayer,
         updateHistory,
         history,
+        handleShow,
       });
     }, 800);
   }
@@ -72,6 +78,7 @@ function makeAction({
   updatePlayer,
   updateHistory,
   history,
+  handleShow,
 }) {
   const source = start === "player" ? { ...player } : { ...enemy };
   const target = start === "player" ? { ...enemy } : { ...player };
@@ -93,6 +100,7 @@ function makeAction({
         updatePlayer,
         history,
         updateHistory,
+        handleShow,
       }),
     2: () =>
       updateStat({
@@ -200,6 +208,7 @@ function performAttack({
   sourceString,
   updateHistory,
   history,
+  handleShow,
 }) {
   const isWeak = target.types.some((typx) => typx.weakness.includes(type));
 
@@ -216,11 +225,23 @@ function performAttack({
 
   if (sourceString === "player") {
     if (target.life <= 0)
-      return endGame({ enemy: target, player: source, updateHistory, history });
+      return endGame({
+        enemy: target,
+        player: source,
+        updateHistory,
+        history,
+        handleShow,
+      });
     updateEnemy({ ...target, life: target.life });
   } else {
     if (target.life <= 0)
-      return endGame({ enemy: source, player: target, updateHistory, history });
+      return endGame({
+        enemy: source,
+        player: target,
+        updateHistory,
+        history,
+        handleShow,
+      });
     updatePlayer({ ...target, life: target.life });
   }
 }
@@ -261,7 +282,8 @@ function updateStat({
   updateHistory([...history, newHistory]);
 }
 
-function endGame({ player, enemy, updateHistory, history }) {
+function endGame({ player, enemy, updateHistory, history, handleShow }) {
+  handleShow();
   if (player.life <= 0) {
     const newHistory = `you lose!`;
     updateHistory([...history, newHistory]);
@@ -282,11 +304,16 @@ function firstTurn({ playerSpeed, enemySpeed }) {
 
 function Playing() {
   const { idMonster } = useParams();
-  const bases = {};
+  const navigate = useNavigate();
+  const [bases, setBases] = useState({
+    player: {},
+    enemy: {},
+  });
   const [player, setPlayer] = useState(
     monsters.find(({ id }) => id == idMonster)
   );
   const [enemy, setEnemy] = useState(getEnemy());
+  const [show, setShow] = useState(false);
   const [history, setHistory] = useState(["The combat beggins!"]);
   const [turn, setTurn] = useState(
     firstTurn({
@@ -294,11 +321,16 @@ function Playing() {
       enemySpeed: enemy.speed,
     })
   );
-  bases.player = { ...player };
-  bases.enemy = { ...enemy };
+
+  function updateBases() {
+    const tempPlayer = cloneDeep(player);
+    const tempEnemy = cloneDeep(enemy);
+    setBases({ player: tempPlayer, enemy: tempEnemy });
+  }
 
   let counter = 0;
   useEffect(() => {
+    updateBases();
     counter++;
     if (counter == 1) {
       enemyAttack();
@@ -327,6 +359,7 @@ function Playing() {
         updateTurn,
         updateHistory,
         history,
+        handleShow,
       });
     }
   };
@@ -347,41 +380,125 @@ function Playing() {
     setEnemy(newValue);
   }
 
+  const handleClose = () => setShow(false);
+  const handleShow = () => setShow(true);
+
+  function tryAgain() {
+    window.location.href = window.location.href;
+  }
+
+  function newCharacter() {
+    navigate(`/selection`);
+  }
+  const scrollContainerRef = useRef(null);
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop =
+        scrollContainerRef.current.scrollHeight;
+    }
+  }, [history]);
+
   return (
     <>
-      <img src={player.image} alt="" />
-      <img src={enemy.image} alt="" />
-      {history}
-      <Card>
-        player life: {player.life}, enemy life: {enemy.life}, turn: {turn}
-        <Row xs={1} md={2} className="g-4">
-          {turn == "player" &&
-            player.attacks.map((skill, index) => (
-              <Button
-                key={index}
-                onClick={() =>
-                  changeTurn({
-                    actionId: skill.action.id,
-                    bases,
-                    player,
-                    enemy,
-                    value: skill.value,
-                    type: skill.type,
-                    start: "player",
-                    updateEnemy,
-                    updatePlayer,
-                    turn,
-                    updateTurn,
-                    updateHistory,
-                    history,
-                  })
-                }
-              >
-                {skill.name}
-              </Button>
-            ))}
+      <Modal show={show} onHide={handleClose}>
+        <Modal.Header>
+          <Modal.Title>
+            {player.life <= enemy.life ? "You lose!" : "You win!"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={tryAgain}>
+            Try again!
+          </Button>
+          <Button variant="primary" onClick={newCharacter}>
+            Select a new character!
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      <Row md={2}>
+        <Col>
+          <Card className="enemyCard">
+            {enemy.name}
+            <ProgressBar
+              variant="danger"
+              animated
+              now={enemy.life}
+              max={bases.enemy.life}
+            />
+            {enemy.life} / {bases.enemy.life}
+          </Card>
+        </Col>
+        <Col>
+          <div className="enemyContainer">
+            <img src={enemy.image} alt="" className="enemyImage" />
+          </div>
+        </Col>
+        <Col>
+          <img src={player.image} alt="" />
+        </Col>
+        <Col>
+          <Card className="playerCard">
+            {player.name}
+            <ProgressBar
+              variant="success"
+              animated
+              now={player.life}
+              max={bases.player.life}
+            />
+            {player.life} / {bases.player.life}
+          </Card>
+        </Col>
+      </Row>
+      <div>
+        <Row>
+          <Col className="history" ref={scrollContainerRef}>
+            {history.map((entry, i) => {
+              const isPlayerEntry = entry.includes("(player):");
+              const authorClass = isPlayerEntry
+                ? "player-entry"
+                : "enemy-entry";
+              return (
+                <p key={i} className={authorClass}>
+                  {entry}
+                </p>
+              );
+            })}
+          </Col>
+          {turn == "player" && (
+            <Col>
+              <Row md={2} className="g-2">
+                {player.attacks.map((skill, index) => (
+                  <Col className="d-grid" key={index}>
+                    <Button
+                      size="lg"
+                      onClick={() =>
+                        changeTurn({
+                          actionId: skill.action.id,
+                          bases,
+                          player,
+                          enemy,
+                          value: skill.value,
+                          type: skill.type,
+                          start: "player",
+                          updateEnemy,
+                          updatePlayer,
+                          turn,
+                          updateTurn,
+                          updateHistory,
+                          history,
+                          handleShow,
+                        })
+                      }
+                    >
+                      {skill.name}
+                    </Button>
+                  </Col>
+                ))}
+              </Row>
+            </Col>
+          )}
         </Row>
-      </Card>
+      </div>
     </>
   );
 }

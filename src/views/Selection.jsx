@@ -12,7 +12,7 @@ function Selection() {
   };
   return (
     <>
-      <h1>Seleccioname un bicho miamol!</h1>
+      <h1>Select a monster!</h1>
       <Row xs={1} md={5} className="g-4">
         {bugs.map((monster, index) => (
           <Col key={index}>
